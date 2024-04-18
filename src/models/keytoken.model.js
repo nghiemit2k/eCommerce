@@ -17,9 +17,13 @@ const KeyTokenSchema = new Schema({
         type: String,
         required: true
     },
-    refresherToken: {
-        type: Array, default: []
+    refresherTokensUsed: {
+        type: Array, default: [] //  refresher tokens used
     },
+    refresherToken: {
+        type: String,
+        required: true
+    }
 }, {
     collection: COLLECTION_NAME,
     timestamps: true,
