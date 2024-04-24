@@ -4,9 +4,18 @@ const { response } = require("express")
 
 class AccessController {
     handlerFreshToken = async (req,res, next) => {
+        // new SuccessResponse({
+        //     message:'get token success',
+        //     metadata: await AccessService.handlerRefresherToken(req.body.refreshToken)
+        // }).send(res)
+
         new SuccessResponse({
-            message:'get token success',
-            metadata: await AccessService.handlerRefresherToken(req.body.refreshToken)
+            message: 'get token success',
+            metadata: await AccessService.handlerRefresherToken({
+                refreshToken: req.refreshToken,
+                user: req.user,
+                keyStore: req.keyStore,
+            })
         }).send(res)
     }
     login = async (req, res, next) => {

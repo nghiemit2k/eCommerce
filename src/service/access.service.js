@@ -17,44 +17,38 @@ class AccessService {
     /*
     check this token used
     */
-    static handlerRefresherToken = async (refreshToken) => {
-        // check xem token nay da dc su dung chua
-        const foundToken = await KeyTokenService.findByRefreshTokenUsed(refreshToken);
-        if (foundToken) {
-            // decode xem may la thang nao
-            const { userId, email } = await verifyJWT(refreshToken, foundToken.privateKey);
-            console.log({ userId, email })
-            // xoa tat ca token trong keyStore
+
+    // khi access token het han thi dung request token de lay lai cap moi
+    static handlerRefresherToken = async ({ keyStore, user, refreshToken }) => {
+        const { userId, email } = user
+
+        if (keyStore.refreshTokensUsed.includes(refreshToken)) {
             await KeyTokenService.deleteKeyById(userId)
             throw new ForbiddenError('Something wrong happened!! please relogin')
         }
-        // no
-        const holderToken = await KeyTokenService.findByRefreshToken(refreshToken)
-        if (!holderToken) throw new AuthFailureError('shop not registered1')
-        // verify token
-        const { userId, email } = await verifyJWT(refreshToken, holderToken.privateKey)
-        console.log('[2]', { userId, email })
-        // check userId
-        const foundShop = await shopModel.findByEmail({ email })
 
+        if (keyStore.refreshToken !== refreshToken) throw new AuthFailureError('shop not registered1')
+        const foundShop = await findByEmail(email)
         if (!foundShop) throw new AuthFailureError('SHop not registered2')
 
         // create 1 cap moi
-        const tokens = await createTokenPair({ userId, email }, holderToken.publicKey, holderToken.privateKey)
+        const tokens = await createTokenPair({ userId, email }, keyStore.publicKey, keyStore.privateKey)
         // update token
 
-        await holderToken.update({
+        await keyStore.updateOne({
             $set: {
                 refreshToken: tokens.refreshToken,
             },
             $addToSet: {
-                refreshTokenUsed: tokens.refreshToken
+                refreshTokensUsed: refreshToken // da dc su dung de lay token moi roi
             }
         })
         return {
-            user: { userId, email },
+            user,
             tokens
         }
+        // check xem token nay da dc su dung chua
+
 
     }
     static logout = async (keyStore) => {
@@ -71,18 +65,21 @@ class AccessService {
     */
 
     static login = async ({ email, password, refreshToken = null }) => {
+        //1
         const foundShop = await findByEmail({ email })
         if (!foundShop) {
             throw new BadRequestError('Shop not registered')
         }
-
+        //2
         const match = bcrypt.compare(password, foundShop.password)
         if (!match) throw new AuthFailureError('AUhthenticated password error')
-
+        //3 create token
         const privateKey = crypto.randomBytes(64).toString('hex')
         const publicKey = crypto.randomBytes(64).toString('hex')
         const { _id: userId } = foundShop
         const tokens = await createTokenPair({ userId, email }, publicKey, privateKey)
+        // set private key, public key vao db
+        // luu refresh token vao db
         await KeyTokenService.createKeyToken({
             refreshToken: tokens.refreshToken,
             privateKey, publicKey, userId

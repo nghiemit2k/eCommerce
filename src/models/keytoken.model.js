@@ -17,10 +17,10 @@ const KeyTokenSchema = new Schema({
         type: String,
         required: true
     },
-    refresherTokensUsed: {
-        type: Array, default: [] //  refresher tokens used
+    refreshTokensUsed: {
+        type: Array, default: [] //  refresh tokens used
     },
-    refresherToken: {
+    refreshToken: {
         type: String,
         required: true
     }

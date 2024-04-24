@@ -28,19 +28,19 @@ const apiKey = async(req,res,next) => {
         
     }
 }
-
+// clouser
 const permission = (permission) => {
     return (req,res,next) => {
         if(!req.objKey.permissions) {
             return res.status(403).json({
-                message:'Forbidden errr'
+                message:'permission denied'
             })
         }
         console.log('permission',req.objKey.permissions)
         const validPermission = req.objKey.permissions.includes(permission)
         if(!validPermission) {
             return res.status(403).json({
-                message:'Forbidden erro'
+                message:'permission denied'
             })
         }
         return next();
