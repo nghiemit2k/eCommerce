@@ -33,7 +33,8 @@ ProductSchema.pre('save',function(next) {
     this.product_slug = slugify(this.product_name, {lower: true})
     next()
 })
-
+// create index for search
+ProductSchema.index({product_name:'text', product_description:'text'})
 // define the product type = clothing
 const clothingSchema = new Schema({
     brand: {type: String, required: true},

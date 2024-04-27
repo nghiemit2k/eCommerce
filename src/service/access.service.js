@@ -66,13 +66,13 @@ class AccessService {
 
     static login = async ({ email, password, refreshToken = null }) => {
         //1
-        const foundShop = await findByEmail({ email })
+        const foundShop = await findByEmail(email)
         if (!foundShop) {
             throw new BadRequestError('Shop not registered')
         }
         //2
         const match = bcrypt.compare(password, foundShop.password)
-        if (!match) throw new AuthFailureError('AUhthenticated password error')
+        if (!match) throw new AuthFailureError('Authenticated password error')
         //3 create token
         const privateKey = crypto.randomBytes(64).toString('hex')
         const publicKey = crypto.randomBytes(64).toString('hex')
