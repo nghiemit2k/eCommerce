@@ -2,7 +2,7 @@ const { product, clothing, electronic } = require('../models/product.model')
 const { BadRequestError } = require('../core/error.response')
 const { findAllDraftsForShop, publishProductByShop, findAllPublishForShop, unPublishProductByShop, searchProductByUser, findAllProducts, findProduct, updateProductById } = require('../models/repositories/product.repo')
 const { removeUndefinedObject, updateNestObjectParser } = require('../utils')
-
+const { insertInventory } = require('../models/repositories/inventory.repo')
 // define factory class to create product
 
 class ProductFactory {
@@ -76,7 +76,15 @@ class Product {
 
     // create new product
     async createProduct(product_id) {
-        return await product.create({ ...this, _id: product_id });
+        const newProduct = await product.create({ ...this, _id: product_id });
+        if (newProduct) {
+            await insertInventory({
+                product_id: newProduct._id,
+                shopId: this.product_shop,
+                stock: this.product_quantity,
+            })
+        }
+        return newProduct
     }
 
     // update product
@@ -99,10 +107,10 @@ class Clothing extends Product {
     async updateProduct(productId) {
         const objectParams = removeUndefinedObject(this)
         if (objectParams.product_attributes) {
-            await updateProductById({ 
-                productId, 
-                bodyUpdate: updateNestObjectParser(objectParams.product_attributes), 
-                model: clothing 
+            await updateProductById({
+                productId,
+                bodyUpdate: updateNestObjectParser(objectParams.product_attributes),
+                model: clothing
             })
         }
         const updateProduct = await super.updateProduct(productId, updateNestObjectParser(objectParams))
