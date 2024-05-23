@@ -1,7 +1,7 @@
 
 const { Types } = require('mongoose');
 const { product, electronic, clothing } = require('../../models/product.model');
-const {getSelectData, unSelectData, convertToObjectIdMongodb} = require('../../utils/index.js')
+const { getSelectData, unSelectData, convertToObjectIdMongodb } = require('../../utils/index.js')
 const findAllDraftsForShop = async ({ query, limit, skip }) => {
     return await queryProduct({ query, limit, skip })
 }
@@ -10,26 +10,26 @@ const findAllPublishForShop = async ({ query, limit, skip }) => {
     return await queryProduct({ query, limit, skip })
 }
 
-const publishProductByShop = async ({ product_shop, product_id} ) => {
+const publishProductByShop = async ({ product_shop, product_id }) => {
     const foundShop = await product.findOneAndUpdate({
         // product_shop: new ObjectId(product_shop),
         // _id: new ObjectId(product_id)
         product_shop: new Types.ObjectId(product_shop),
         _id: new Types.ObjectId(product_id)
-    }, 
-    { $set: { isDraft: false, isPublish: true } },
-    { new: true })   // để trả về tài liệu đã được sửa đổi)
-     
+    },
+        { $set: { isDraft: false, isPublish: true } },
+        { new: true })   // để trả về tài liệu đã được sửa đổi)
+
     if (!foundShop) return null;
     return foundShop;
 }
 
-const unPublishProductByShop = async ({ product_shop, product_id}) => {
+const unPublishProductByShop = async ({ product_shop, product_id }) => {
     const foundShop = await product.findOneAndUpdate({
         product_shop: new Types.ObjectId(product_shop),
         _id: new Types.ObjectId(product_id)
-    }, {$set: {isDraft: true, isPublish: false} }, {new: true})
-    if(!foundShop) return null;
+    }, { $set: { isDraft: true, isPublish: false } }, { new: true })
+    if (!foundShop) return null;
     return foundShop;
 }
 const queryProduct = async ({ query, limit, skip }) => {
@@ -44,40 +44,51 @@ const queryProduct = async ({ query, limit, skip }) => {
 const searchProductByUser = async ({ keySearch }) => {
     const results = await product.find(
         {
-           isPublish: true,
+            isPublish: true,
             $text: { $search: keySearch }
         },
-        { score: { $meta: 'textScore' }}
+        { score: { $meta: 'textScore' } }
     )
-    .sort({ score: { $meta: 'textScore' } })
-    .lean();
+        .sort({ score: { $meta: 'textScore' } })
+        .lean();
 
     return results;
 };
-const findAllProducts = async ({limit, sort,page, filter, select}) => {
+const findAllProducts = async ({ limit, sort, page, filter, select }) => {
     const skip = (page - 1) * limit;
-    const sortBy = sort ==='ctime' ?{_id: -1}: {_id:1}
+    const sortBy = sort === 'ctime' ? { _id: -1 } : { _id: 1 }
     const products = await product.find(filter)
-    .sort(sortBy)
-    .skip(skip)
-    .limit(limit)
-    .select(getSelectData(select))
-    .lean()
+        .sort(sortBy)
+        .skip(skip)
+        .limit(limit)
+        .select(getSelectData(select))
+        .lean()
     return products
 }
-const findProduct = async ({product_id, unSelect}) => {
+const findProduct = async ({ product_id, unSelect }) => {
     return await product.findById(product_id).select(unSelectData(unSelect))
 }
-const updateProductById = async ({productId, bodyUpdate, model, isNew= true}) => {
+const updateProductById = async ({ productId, bodyUpdate, model, isNew = true }) => {
     return await model.findByIdAndUpdate(productId, bodyUpdate, {
         new: isNew
     })
 }
 const getProductById = async (productId) => {
-    return await product.findOne({_id: convertToObjectIdMongodb(productId)}).lean();
+    return await product.findOne({ _id: convertToObjectIdMongodb(productId) }).lean();
 }
 
-
+const checkProductByServer = async (products) => {
+    return await Promise.all(products.map(async (product) => {
+        const foundProduct = await getProductById(product.productId)
+        if (foundProduct) {
+            return {
+                price: foundProduct.product_price,
+                quantity: product.quantity,
+                productId: product.productId
+            }
+        }
+    }))
+}
 module.exports = {
     findAllDraftsForShop,
     publishProductByShop,
@@ -87,5 +98,6 @@ module.exports = {
     findAllProducts,
     findProduct,
     updateProductById,
-    getProductById
+    getProductById,
+    checkProductByServer
 }

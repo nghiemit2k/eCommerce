@@ -2,6 +2,7 @@ const _ = require('lodash');
 const { Types } = require('mongoose')
 const { ObjectId } = require('mongodb');
 const convertToObjectIdMongodb = id => new ObjectId(id);
+
 const getInfoData = ({ fields = [], object = {} }) => {
     return _.pick(object, fields);
 }

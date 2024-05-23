@@ -66,7 +66,7 @@ class AccessService {
 
     static login = async ({ email, password, refreshToken = null }) => {
         //1
-        const foundShop = await findByEmail(email)
+        const foundShop = await findByEmail({email})
         if (!foundShop) {
             throw new BadRequestError('Shop not registered')
         }
@@ -85,7 +85,7 @@ class AccessService {
             privateKey, publicKey, userId
         })
         return {
-            shop: getInfoData({ fields: ['_id', 'name', 'email'], object: foundShop }), tokens
+            shop: getInfoData({ fields: ['_id', 'email'], object: foundShop }), tokens
         }
 
     }
@@ -129,7 +129,7 @@ class AccessService {
             return {
                 code: 201,
                 metadata: {
-                    shop: getInfoData({ fields: ['_id', 'name', 'email'], object: newShop }),
+                    shop: getInfoData({ fields: ['_id', 'email'], object: newShop }),
                     tokens
                 }
             }
